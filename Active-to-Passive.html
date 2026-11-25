@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Active to Passive – Step by Step</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#2f4a3a; --board2:#2a4334; --wood:#8a6a45; --wood2:#6e5234;
+  --chalk:#f2f2ea; --muted:#b9c4bb;
+  --obj:#ff8a80; --be:#8fc7ff; --pp:#b8f08a; --agent:#e0b3ff; --rest:#f6e3a1;
+  --hand:'Kalam','Chalkboard SE','Comic Sans MS',cursive;
+  --clear:'Andika','Trebuchet MS',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#1b211d;color:var(--chalk);font-family:var(--clear)}
+button{font:inherit;cursor:pointer}
+#app{height:100%;display:flex;flex-direction:column;padding:12px 16px 10px;gap:10px;max-width:1500px;margin:0 auto}
+
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{font-family:var(--hand);font-size:22px;line-height:1.1}
+.brand small{display:block;font-size:14px;color:var(--muted)}
+#picker{display:flex;gap:6px;flex-wrap:wrap;flex:1;justify-content:center}
+#picker button{width:36px;height:36px;border-radius:50%;border:2px solid #4c5f52;background:transparent;color:var(--muted);font-family:var(--hand);font-size:17px}
+#picker button.cur{border-color:var(--chalk);color:var(--chalk);background:#3b5646}
+.tools{display:flex;gap:8px}
+.btn{border:1.5px solid #6d7f72;background:#26302a;color:var(--chalk);border-radius:8px;padding:7px 12px;font-size:15px}
+.btn:hover{background:#334037}
+.ask{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none}
+.ask input{width:18px;height:18px;accent-color:#f6e3a1;cursor:pointer}
+.ask:has(input:checked){border-color:var(--rest);color:var(--rest)}
+.c-q{color:var(--rest)}
+.qmark{display:inline-block;width:1.25em;height:1.25em;line-height:1.2em;text-align:center;border:2px solid currentColor;border-radius:50%;margin-right:.35em}
+
+#board{flex:1;min-height:0;position:relative;border:14px solid var(--wood);border-bottom-width:22px;border-radius:6px;
+  box-shadow:inset 0 0 0 2px var(--wood2),inset 0 0 80px rgba(0,0,0,.35);
+  background:
+   radial-gradient(ellipse at 20% 30%,rgba(255,255,255,.05),transparent 45%),
+   radial-gradient(ellipse at 75% 65%,rgba(255,255,255,.04),transparent 50%),
+   radial-gradient(ellipse at 50% 100%,rgba(0,0,0,.25),transparent 60%),
+   linear-gradient(var(--board),var(--board2));
+  display:flex;flex-direction:column;padding:2.2vh 3vw 0;cursor:pointer;user-select:none;overflow:hidden}
+#tray{position:absolute;bottom:-22px;left:8%;height:8px;display:flex;gap:18px}
+#tray span{display:block;width:34px;height:7px;border-radius:3px;background:#eee;opacity:.85}
+#tray span:nth-child(2){width:22px;background:#ffb3ad}
+#tray span:nth-child(3){width:28px;background:#b3d8ff}
+
+#meta{font-family:var(--hand);color:var(--muted);font-size:clamp(14px,1.4vw,20px);display:flex;justify-content:space-between;gap:10px}
+#meta .tense{border:1.5px dashed var(--muted);border-radius:20px;padding:0 12px}
+
+#lines{flex:1;display:flex;flex-direction:column;justify-content:center;padding-left:4%;min-height:0}
+.lbl{font-family:var(--hand);font-size:clamp(14px,1.3vw,19px);color:var(--muted);letter-spacing:.04em;transition:opacity .4s}
+.line{display:flex;flex-wrap:wrap;column-gap:.3em;row-gap:.25em;align-items:baseline;font-size:clamp(26px,min(3.6vw,7.4vh),64px);line-height:1.25}
+#orig{margin:.1em 0 1.15em}
+#pass{margin-top:.1em;min-height:1.3em}
+.w{position:relative;transition:color .5s,opacity .5s,text-shadow .5s;border-radius:6px}
+.dot{margin-left:-.3em}
+.hid{visibility:hidden}
+.gone{display:none}
+
+.c-obj{color:var(--obj);font-weight:700}
+.c-be{color:var(--be);font-weight:700}
+.c-pp{color:var(--pp);font-weight:700}
+.c-agent{color:var(--agent);font-weight:700}
+.c-rest{color:var(--rest)}
+.faded{opacity:.45}
+.struck{text-decoration:line-through;text-decoration-thickness:.08em}
+.ringed{outline:3px dashed currentColor;outline-offset:.12em}
+.tag{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:.15em;font-family:var(--hand);font-size:.36em;white-space:nowrap;
+  color:var(--be);border:2px solid var(--be);border-radius:20px;padding:0 .6em;line-height:1.5;font-weight:400}
+
+#formula{display:flex;gap:.5em;align-items:center;flex-wrap:wrap;justify-content:center;font-family:var(--hand);font-size:clamp(15px,1.6vw,24px);min-height:2em;padding:0 0 1vh}
+#formula .f{border:2px solid currentColor;border-radius:10px;padding:0 .6em;transition:opacity .4s}
+#formula .plus{color:var(--muted)}
+
+#caption{margin:0 -3vw;padding:1.6vh 3vw 2vh;background:rgba(0,0,0,.18);border-top:2px dashed rgba(242,242,234,.25);min-height:19vh}
+#ctitle{font-family:var(--hand);font-weight:700;font-size:clamp(20px,2.2vw,34px);line-height:1.2}
+#cbody{font-size:clamp(17px,1.75vw,28px);line-height:1.45;margin-top:.3em;max-width:72em}
+#cbody b{font-weight:700}
+.rule{display:inline-block;font-family:var(--hand);border:1.5px solid var(--muted);border-radius:8px;padding:0 .5em;margin:.25em .3em 0 0;font-size:.85em;color:var(--muted)}
+.rule.on{color:var(--be);border-color:var(--be)}
+
+footer{display:flex;align-items:center;gap:12px}
+#dots{flex:1;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+#dots i{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--muted);display:block}
+#dots i.on{background:var(--chalk);border-color:var(--chalk)}
+.hint{font-family:var(--hand);color:#7f8f84;font-size:14px;text-align:center}
+
+@keyframes chalkIn{0%{opacity:0;transform:translateY(-.35em) scale(1.25);filter:blur(2px)}100%{opacity:1;transform:none;filter:none}}
+.chalkin{animation:chalkIn .6s cubic-bezier(.2,.8,.3,1.2) both}
+@keyframes pulse{0%,100%{text-shadow:none}40%{text-shadow:0 0 .35em currentColor}}
+.pulse{animation:pulse 1.1s ease-in-out 1}
+@keyframes swap{0%{transform:rotateX(0)}50%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+.swap{display:inline-block;animation:swap .7s ease-in-out}
+.flyer{position:fixed;z-index:50;pointer-events:none;margin:0;transition:transform .85s cubic-bezier(.45,.05,.25,1);will-change:transform;white-space:nowrap}
+.capin{animation:chalkIn .45s ease both}
+
+/* ---------- modes ---------- */
+.modes{display:flex;border:1.5px solid #6d7f72;border-radius:10px;overflow:hidden}
+.modes button{background:transparent;border:0;color:var(--muted);padding:7px 14px;font-size:15px}
+.modes button.cur{background:var(--chalk);color:#1f2b23;font-weight:700}
+#practice{display:none}
+body.practice-mode #board, body.practice-mode footer, body.practice-mode .ask, body.practice-mode #btnFull{display:none}
+body.practice-mode #practice{display:flex}
+body.practice-mode{overflow:auto}
+body.practice-mode #app{height:auto;min-height:100%}
+
+/* ---------- practice ---------- */
+#practice{flex-direction:column;gap:12px;width:100%;max-width:1000px;margin:0 auto}
+.pmeta{display:flex;justify-content:space-between;font-family:var(--hand);color:var(--muted);font-size:16px}
+.pmeta .tense{border:1.5px dashed var(--muted);border-radius:20px;padding:0 10px}
+.pboard{border:10px solid var(--wood);border-bottom-width:14px;border-radius:6px;padding:14px 4% 18px;
+  background:radial-gradient(ellipse at 25% 30%,rgba(255,255,255,.05),transparent 50%),linear-gradient(var(--board),var(--board2));
+  box-shadow:inset 0 0 50px rgba(0,0,0,.3)}
+.pline{display:flex;flex-wrap:wrap;gap:.3em;align-items:center;font-size:clamp(20px,4.6vw,44px);line-height:1.3;min-height:1.5em;margin:.15em 0 .5em}
+.chunk{font:inherit;color:var(--chalk);background:rgba(255,255,255,.04);border:2px dashed rgba(242,242,234,.45);border-radius:10px;padding:.02em .35em;cursor:default;position:relative;transition:color .4s,border-color .4s,opacity .4s,background .3s}
+.chunk.pick{cursor:pointer;border-style:solid}
+.chunk.pick:hover{background:rgba(255,255,255,.12)}
+.chunk.focus-be{border:3px solid var(--be)}
+.chunk.focus-agent{border:3px solid var(--agent)}
+.chunk.c-obj{border-color:var(--obj)} .chunk.c-be{border-color:var(--be)} .chunk.c-agent{border-color:var(--agent)} .chunk.c-rest{border-color:var(--rest)}
+.pw{transition:opacity .4s}
+.pq{background:#26302a;border:1.5px solid #4c5f52;border-radius:12px;padding:14px 16px}
+#prTitle{font-family:var(--hand);font-weight:700;font-size:clamp(20px,3.2vw,28px);line-height:1.2}
+#prText{font-size:clamp(17px,2.6vw,22px);line-height:1.45;margin-top:.25em}
+#prOpts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+#prOpts:empty{display:none}
+.opt{font-size:clamp(17px,2.6vw,22px);padding:12px 10px;border-radius:12px;border:2px solid #6d7f72;background:#1f2721;color:var(--chalk);min-height:54px}
+.opt:hover{background:#2f3b33}
+.opt.wrong{opacity:.4;text-decoration:line-through;border-style:dashed;pointer-events:none}
+.opt.right{border-color:var(--pp);color:var(--pp);background:rgba(184,240,138,.08);font-weight:700}
+#prHint{min-height:1.4em;margin-top:10px;font-size:clamp(16px,2.4vw,20px);color:var(--rest);line-height:1.4}
+#prHint.good{color:var(--pp)}
+.pnav{display:flex;justify-content:space-between;gap:10px;margin-top:12px;flex-wrap:wrap}
+.btn.go{background:var(--chalk);color:#1f2b23;font-weight:700;border-color:var(--chalk);font-size:17px;padding:9px 20px}
+.btn.go[hidden]{display:none}
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.shake{animation:shake .4s}
+@media (max-width:640px){
+  #app{padding:8px 8px 10px}
+  header{gap:8px}
+  .brand{font-size:18px}
+  .tools{display:none}
+  #picker button{width:30px;height:30px;font-size:15px}
+  #picker{order:3;flex-basis:100%;justify-content:flex-start}
+  .pboard{border-width:7px;border-bottom-width:10px}
+}
+
+/* ---------- editor ---------- */
+#editor{position:fixed;inset:0;background:rgba(10,14,12,.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+#editor.closed{display:none}
+.panel{background:#f7f5ee;color:#222;border-radius:12px;width:min(1180px,100%);max-height:100%;display:flex;flex-direction:column;overflow:hidden;font-family:system-ui,'Segoe UI',sans-serif;font-size:15px}
+.phead{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid #ddd8c8;background:#efebdf}
+.phead h2{margin:0;font-size:19px;flex:1;font-weight:600}
+.pbody{display:grid;grid-template-columns:minmax(240px,330px) 1fr;min-height:0;flex:1}
+.plist{border-right:1px solid #ddd8c8;padding:12px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.pform{padding:14px 20px 20px;overflow:auto}
+.lb{border:1px solid #d8d2bf;background:#fff;color:#222;border-radius:7px;padding:6px 11px;font-size:14px}
+.lb:hover{background:#f1eee4}
+.lb.primary{background:#2f4a3a;color:#fff;border-color:#2f4a3a}
+.lb.danger{color:#a32d2d}
+.item{border:1px solid #ddd8c8;border-radius:8px;padding:8px 10px;background:#fff}
+.item.sel{border-color:#2f4a3a;box-shadow:0 0 0 2px #2f4a3a33}
+.item .t{font-size:14px;margin-bottom:6px}
+.item .t small{color:#776f5c}
+.item .row{display:flex;gap:5px;flex-wrap:wrap}
+.item .row .lb{padding:3px 8px;font-size:13px}
+fieldset{border:1px solid #ddd8c8;border-radius:10px;margin:0 0 14px;padding:10px 14px 12px;background:#fff}
+legend{font-weight:600;padding:0 6px;font-size:14px}
+.help{color:#6b6452;font-size:13px;margin:2px 0 8px}
+input[type=text],select,textarea{font:inherit;font-size:15px;border:1px solid #cfc8b3;border-radius:6px;padding:6px 8px;background:#fffdf7;color:#222;width:100%}
+textarea{min-height:110px;font-family:ui-monospace,monospace;font-size:12px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 14px}
+.grid2 label{display:block;font-size:13px;color:#544d3d;font-weight:600}
+.grid2 label span{font-weight:400;color:#857c66}
+.paint{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px}
+.paint button{border:2px solid transparent;border-radius:20px;padding:4px 12px;font-size:14px;font-weight:600}
+.paint button.cur{border-color:#222}
+.p-subj{background:#ead8fb;color:#4b1f73}
+.p-verb{background:#d3e7fb;color:#0c447c}
+.p-obj{background:#fbd9d6;color:#7a1f18}
+.p-none{background:#eee9db;color:#444}
+#chips{display:flex;flex-wrap:wrap;gap:6px;min-height:38px;padding:6px;border:1px dashed #cfc8b3;border-radius:8px}
+#chips span{padding:4px 10px;border-radius:6px;cursor:pointer;font-size:17px;border:1px solid #ddd5bf;background:#fff}
+#chips span.t-subj{background:#ead8fb;color:#4b1f73;border-color:#c8a7ea}
+#chips span.t-verb{background:#d3e7fb;color:#0c447c;border-color:#9fc4ea}
+#chips span.t-obj{background:#fbd9d6;color:#7a1f18;border-color:#eba59f}
+.err{color:#a32d2d;font-size:13px;min-height:1.2em;margin-top:6px}
+.ok{color:#2e6b1f;font-size:13px}
+.preview{font-size:18px;padding:8px 10px;background:#2f4a3a;color:#f2f2ea;border-radius:8px;font-family:var(--clear)}
+.radio{display:flex;gap:14px;align-items:center;margin:4px 0 8px}
+.radio label{display:flex;gap:5px;align-items:center;font-weight:600;color:#333}
+.foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding-top:4px}
+#codebox{margin-top:10px}
+@media (max-width:760px){.pbody{grid-template-columns:1fr}.plist{border-right:0;border-bottom:1px solid #ddd8c8;max-height:35vh}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">Active → Passive<small id="deckTitle"></small></div>
+    <div class="modes" role="tablist" aria-label="Mode">
+      <button id="mDemo" role="tab">Demo</button><button id="mPractice" role="tab">Practice</button>
+    </div>
+    <nav id="picker" aria-label="Choose a sentence"></nav>
+    <div class="tools">
+      <label class="btn ask" title="Show a question before each step, so students can guess first"><input type="checkbox" id="askMode"> Ask the class first</label>
+      <button class="btn" id="btnEdit" title="Add or change sentences">✎ Sentences</button>
+      <button class="btn" id="btnFull" title="Full screen">⛶ Full screen</button>
+    </div>
+  </header>
+
+  <main id="board" aria-live="polite">
+    <div id="meta"><span id="metaL"></span><span id="metaR" class="tense"></span></div>
+    <div id="lines">
+      <div class="lbl">Active</div>
+      <div class="line" id="orig"></div>
+      <div class="lbl" id="passLbl">Passive</div>
+      <div class="line" id="pass"></div>
+    </div>
+    <div id="formula"></div>
+    <div id="caption"><div id="ctitle"></div><div id="cbody"></div></div>
+    <div id="tray"><span></span><span></span><span></span></div>
+  </main>
+
+  <section id="practice" aria-live="polite">
+    <div class="pmeta"><span id="prMeta"></span><span id="prTense" class="tense"></span></div>
+    <div class="pboard">
+      <div class="lbl">Active</div>
+      <div class="pline" id="prAct"></div>
+      <div class="lbl" id="prPasLbl">Passive</div>
+      <div class="pline" id="prPas"></div>
+    </div>
+    <div class="pq">
+      <div id="prTitle"></div>
+      <div id="prText"></div>
+      <div id="prOpts"></div>
+      <div id="prHint" role="status"></div>
+      <div class="pnav"><button class="btn" id="prRestart">↺ Start this sentence again</button><button class="btn go" id="prNext">Next →</button></div>
+    </div>
+  </section>
+
+  <footer>
+    <button class="btn" id="btnPrev">← Back</button>
+    <div style="flex:1">
+      <div id="dots"></div>
+      <div class="hint">Click the board, or press Space / → for the next step · ← to go back</div>
+    </div>
+    <button class="btn" id="btnNext">Next →</button>
+  </footer>
+</div>
+
+<!-- ================= EDITOR ================= -->
+<div id="editor" class="closed" role="dialog" aria-modal="true" aria-label="Edit sentences">
+ <div class="panel">
+  <div class="phead">
+    <h2>Sentences</h2>
+    <button class="lb" id="edCode">Share / load deck code</button>
+    <button class="lb primary" id="edClose">Close and present</button>
+  </div>
+  <div class="pbody">
+    <div class="plist">
+      <label style="font-size:13px;font-weight:600;color:#544d3d">Deck title
+        <input type="text" id="edDeckTitle">
+      </label>
+      <button class="lb primary" id="edNew">+ New sentence</button>
+      <div id="edList" style="display:flex;flex-direction:column;gap:8px"></div>
+      <button class="lb danger" id="edReset" style="margin-top:8px">Reset to built-in sentences</button>
+      <div id="resetConfirm" class="help" style="display:none">This replaces all your sentences. <button class="lb danger" id="edResetYes">Yes, reset</button> <button class="lb" id="edResetNo">Cancel</button></div>
+    </div>
+
+    <div class="pform">
+      <div id="codePanel" style="display:none">
+        <fieldset><legend>Share or load a deck</legend>
+          <p class="help">Your sentences are saved in this browser only. To give them to a colleague, copy this code and send it to them. They open this page, choose <b>Sentences → Share / load deck code</b>, paste it in, and press <b>Load</b>.</p>
+          <textarea id="codeText" spellcheck="false"></textarea>
+          <div class="foot">
+            <span id="codeMsg" class="help"></span>
+            <button class="lb" id="codeCopy">Copy code</button>
+            <button class="lb primary" id="codeLoad">Load pasted code</button>
+            <button class="lb" id="codeBack">Back to editing</button>
+          </div>
+        </fieldset>
+      </div>
+
+      <div id="formPanel">
+      <fieldset><legend>1 · Type the active sentence</legend>
+        <p class="help">Time or place phrases can go at the start or the end (for example, "My grandad built this house <i>in 1975</i>").</p>
+        <input type="text" id="fSentence" placeholder="Someone stole my bike yesterday.">
+      </fieldset>
+
+      <fieldset><legend>2 · Colour the words</legend>
+        <p class="help">Choose a colour, then click the words. Uncoloured words before the subject or after the object are carried over to the passive sentence automatically.</p>
+        <div class="paint">
+          <button class="p-subj cur" data-role="subj">Subject</button>
+          <button class="p-verb" data-role="verb">Verb</button>
+          <button class="p-obj" data-role="obj">Object</button>
+          <button class="p-none" data-role="none">Clear</button>
+        </div>
+        <div id="chips"></div>
+        <div class="err" id="tagErr"></div>
+      </fieldset>
+
+      <fieldset><legend>3 · Check the details</legend>
+        <p class="help">These are filled in automatically. Correct anything that's wrong; your changes are kept.</p>
+        <div class="grid2">
+          <label>Tense
+            <select id="fTense"><option value="present">Present simple</option><option value="past">Past simple</option></select></label>
+          <label>New subject <span>(the object, moved to the front)</span>
+            <input type="text" id="fNewSubject"></label>
+          <label>Singular or plural?
+            <select id="fNumber"><option value="singular">Singular</option><option value="plural">Plural</option><option value="I">"I"</option></select></label>
+          <label>Form of <i>be</i>
+            <input type="text" id="fBe"></label>
+          <label>Verb forms <span>(base → past → past participle)</span>
+            <input type="text" id="fForms"></label>
+          <label>Past participle
+            <input type="text" id="fPP"></label>
+          <label>Chunks at the end <span>(for Practice mode; split with /)</span>
+            <input type="text" id="fChunks" placeholder="last night / on Queen Street"></label>
+          <label>Extra note for the <i>be</i> step <span>(optional)</span>
+            <input type="text" id="fBeNote" placeholder="(It's one play.)"></label>
+        </div>
+        <div class="help" id="pronInfo" style="margin-top:8px"></div>
+      </fieldset>
+
+      <fieldset><legend>4 · Is the subject important?</legend>
+        <div class="radio">
+          <label><input type="radio" name="keep" value="keep" id="fKeep"> Yes, keep it ("by …")</label>
+          <label><input type="radio" name="keep" value="drop" id="fDrop"> No, leave it out</label>
+        </div>
+        <div class="grid2">
+          <label>The "by" phrase
+            <input type="text" id="fAgent"></label>
+          <label>Reason shown to students
+            <select id="fReasonPick"></select></label>
+        </div>
+        <label style="display:block;margin-top:8px;font-size:13px;font-weight:600;color:#544d3d">Reason text
+          <input type="text" id="fReason"></label>
+        <label style="display:flex;gap:6px;align-items:center;margin-top:8px;font-size:14px">
+          <input type="checkbox" id="fAgentLast"> Put "by …" at the very end <span class="help" style="margin:0">(e.g. "We were invited to the party <b>by the teacher</b>")</span></label>
+      </fieldset>
+
+      <fieldset><legend>Preview</legend>
+        <div class="preview" id="preview">–</div>
+      </fieldset>
+      <div class="foot">
+        <span class="err" id="saveErr"></span><span class="ok" id="saveOk"></span>
+        <button class="lb" id="edCancel">Clear form</button>
+        <button class="lb primary" id="edSave">Save sentence</button>
+      </div>
+      </div>
+    </div>
+  </div>
+ </div>
+</div>
+
+<script>
+/* ================= DATA ================= */
+const DEMO_DECK = {
+  title: "Past Simple and Present Simple",
+  sentences: [
+    {subject:"Someone",verb:"stole",object:"my bike",post:"yesterday",postChunks:["yesterday"],tense:"past",newSubject:"My bike",pronounFrom:"",number:"singular",be:"was",forms:"steal → stole → stolen",participle:"stolen",keep:false,agent:"by someone",reason:"“Someone” doesn't tell us anything useful.",agentLast:false,beNote:""},
+    {subject:"My mum",verb:"cleans",object:"the kitchen",post:"every Saturday",postChunks:["every Saturday"],tense:"present",newSubject:"The kitchen",pronounFrom:"",number:"singular",be:"is",forms:"clean → cleaned → cleaned",participle:"cleaned",keep:true,agent:"by my mum",reason:"We want to know who does it. It's important information.",agentLast:false,beNote:""},
+    {subject:"They",verb:"make",object:"these phones",post:"in China",postChunks:["in China"],tense:"present",newSubject:"These phones",pronounFrom:"",number:"plural",be:"are",forms:"make → made → made",participle:"made",keep:false,agent:"by them",reason:"“They” just means people in general.",agentLast:false,beNote:""},
+    {subject:"The firefighters",verb:"put out",object:"the fire",post:"last night",postChunks:["last night"],tense:"past",newSubject:"The fire",pronounFrom:"",number:"singular",be:"was",forms:"put out → put out → put out",participle:"put out",keep:false,agent:"by the firefighters",reason:"It's obvious. Putting out fires is a firefighter's job!",agentLast:false,beNote:""},
+    {subject:"Shakespeare",verb:"wrote",object:"Romeo and Juliet",post:"",tense:"past",newSubject:"Romeo and Juliet",pronounFrom:"",number:"singular",be:"was",forms:"write → wrote → written",participle:"written",keep:true,agent:"by Shakespeare",reason:"The writer is famous and important.",agentLast:false,beNote:"(It's one play.)"},
+    {subject:"The teacher",verb:"invited",object:"us",post:"to the party",postChunks:["to the party"],tense:"past",newSubject:"We",pronounFrom:"us",number:"plural",be:"were",forms:"invite → invited → invited",participle:"invited",keep:true,agent:"by the teacher",reason:"It tells us who invited us. That's useful information.",agentLast:true,beNote:""},
+    {subject:"People",verb:"speak",object:"English",post:"in New Zealand",postChunks:["in New Zealand"],tense:"present",newSubject:"English",pronounFrom:"",number:"singular",be:"is",forms:"speak → spoke → spoken",participle:"spoken",keep:false,agent:"by people",reason:"“People” means everyone, so it isn't important.",agentLast:false,beNote:""},
+    {subject:"My grandad",verb:"built",object:"this house",post:"in 1975",postChunks:["in 1975"],tense:"past",newSubject:"This house",pronounFrom:"",number:"singular",be:"was",forms:"build → built → built",participle:"built",keep:true,agent:"by my grandad",reason:"We want to know who built it. It's important information.",agentLast:false,beNote:""},
+    {subject:"The police",verb:"arrested",object:"a man",post:"last night on Queen Street",postChunks:["last night","on Queen Street"],tense:"past",newSubject:"A man",pronounFrom:"",number:"singular",be:"was",forms:"arrest → arrested → arrested",participle:"arrested",keep:false,agent:"by the police",reason:"It's obvious. Arresting people is the police's job!",agentLast:false,beNote:""}
+  ]
+};
+const PRACTICE_DECK = {
+ "title": "Practice sentences",
+ "sentences": [
+  {
+   "subject": "The chef",
+   "verb": "prepared",
+   "object": "the soup",
+   "post": "this morning",
+   "postChunks": [
+    "this morning"
+   ],
+   "tense": "past",
+   "newSubject": "The soup",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "was",
+   "forms": "prepare → prepared → prepared",
+   "participle": "prepared",
+   "keep": false,
+   "agent": "by the chef",
+   "reason": "It's easy to guess. Chefs make food!",
+   "agentLast": false,
+   "beNote": ""
+  },
+  {
+   "subject": "My brother",
+   "verb": "fixed",
+   "object": "the bike",
+   "post": "yesterday",
+   "postChunks": [
+    "yesterday"
+   ],
+   "tense": "past",
+   "newSubject": "The bike",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "was",
+   "forms": "fix → fixed → fixed",
+   "participle": "fixed",
+   "keep": true,
+   "agent": "by my brother",
+   "reason": "We want to know who fixed it. It's useful information.",
+   "agentLast": false,
+   "beNote": ""
+  },
+  {
+   "subject": "The shop",
+   "verb": "sells",
+   "object": "fresh bread",
+   "post": "every day",
+   "postChunks": [
+    "every day"
+   ],
+   "tense": "present",
+   "newSubject": "Fresh bread",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "is",
+   "forms": "sell → sold → sold",
+   "participle": "sold",
+   "keep": false,
+   "agent": "by the shop",
+   "reason": "It's easy to guess. Shops sell things!",
+   "agentLast": false,
+   "beNote": "(Bread is uncountable.)"
+  },
+  {
+   "subject": "Sarah",
+   "verb": "cleaned",
+   "object": "the kitchen",
+   "post": "after breakfast",
+   "postChunks": [
+    "after breakfast"
+   ],
+   "tense": "past",
+   "newSubject": "The kitchen",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "was",
+   "forms": "clean → cleaned → cleaned",
+   "participle": "cleaned",
+   "keep": true,
+   "agent": "by Sarah",
+   "reason": "We want to know who cleaned it. Sarah is a person we know.",
+   "agentLast": false,
+   "beNote": ""
+  },
+  {
+   "subject": "The teacher",
+   "verb": "checks",
+   "object": "our homework",
+   "post": "every Friday",
+   "postChunks": [
+    "every Friday"
+   ],
+   "tense": "present",
+   "newSubject": "Our homework",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "is",
+   "forms": "check → checked → checked",
+   "participle": "checked",
+   "keep": false,
+   "agent": "by the teacher",
+   "reason": "It's easy to guess. Teachers check homework!",
+   "agentLast": false,
+   "beNote": "(Homework is uncountable.)"
+  },
+  {
+   "subject": "The company",
+   "verb": "makes",
+   "object": "cheap furniture",
+   "post": "",
+   "postChunks": [],
+   "tense": "present",
+   "newSubject": "Cheap furniture",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "is",
+   "forms": "make → made → made",
+   "participle": "made",
+   "keep": false,
+   "agent": "by the company",
+   "reason": "“The company” doesn't tell us much. Which company?",
+   "agentLast": false,
+   "beNote": "(Furniture is uncountable.)"
+  },
+  {
+   "subject": "The storm",
+   "verb": "damaged",
+   "object": "the roof",
+   "post": "last night",
+   "postChunks": [
+    "last night"
+   ],
+   "tense": "past",
+   "newSubject": "The roof",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "was",
+   "forms": "damage → damaged → damaged",
+   "participle": "damaged",
+   "keep": true,
+   "agent": "by the storm",
+   "reason": "The storm is the reason for the damage. That's important information.",
+   "agentLast": false,
+   "beNote": ""
+  },
+  {
+   "subject": "The farmer",
+   "verb": "grows",
+   "object": "potatoes",
+   "post": "on this land",
+   "postChunks": [
+    "on this land"
+   ],
+   "tense": "present",
+   "newSubject": "Potatoes",
+   "pronounFrom": "",
+   "number": "plural",
+   "be": "are",
+   "forms": "grow → grew → grown",
+   "participle": "grown",
+   "keep": false,
+   "agent": "by the farmer",
+   "reason": "It's easy to guess. Farmers grow food!",
+   "agentLast": false,
+   "beNote": ""
+  },
+  {
+   "subject": "The waiter",
+   "verb": "brought",
+   "object": "the bill",
+   "post": "after dinner",
+   "postChunks": [
+    "after dinner"
+   ],
+   "tense": "past",
+   "newSubject": "The bill",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "was",
+   "forms": "bring → brought → brought",
+   "participle": "brought",
+   "keep": false,
+   "agent": "by the waiter",
+   "reason": "It's easy to guess. Waiters bring the bill!",
+   "agentLast": false,
+   "beNote": ""
+  },
+  {
+   "subject": "My parents",
+   "verb": "bought",
+   "object": "a new table",
+   "post": "last week",
+   "postChunks": [
+    "last week"
+   ],
+   "tense": "past",
+   "newSubject": "A new table",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "was",
+   "forms": "buy → bought → bought",
+   "participle": "bought",
+   "keep": true,
+   "agent": "by my parents",
+   "reason": "We want to know who bought it. It's useful information.",
+   "agentLast": false,
+   "beNote": ""
+  },
+  {
+   "subject": "The school",
+   "verb": "offers",
+   "object": "free English classes",
+   "post": "",
+   "postChunks": [],
+   "tense": "present",
+   "newSubject": "Free English classes",
+   "pronounFrom": "",
+   "number": "plural",
+   "be": "are",
+   "forms": "offer → offered → offered",
+   "participle": "offered",
+   "keep": true,
+   "agent": "by the school",
+   "reason": "We want to know who offers the classes. Then we can go there!",
+   "agentLast": false,
+   "beNote": ""
+  },
+  {
+   "subject": "The mechanic",
+   "verb": "repaired",
+   "object": "my car",
+   "post": "on Tuesday",
+   "postChunks": [
+    "on Tuesday"
+   ],
+   "tense": "past",
+   "newSubject": "My car",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "was",
+   "forms": "repair → repaired → repaired",
+   "participle": "repaired",
+   "keep": false,
+   "agent": "by the mechanic",
+   "reason": "It's easy to guess. Mechanics repair cars!",
+   "agentLast": false,
+   "beNote": ""
+  },
+  {
+   "subject": "The children",
+   "verb": "broke",
+   "object": "the window",
+   "post": "during the game",
+   "postChunks": [
+    "during the game"
+   ],
+   "tense": "past",
+   "newSubject": "The window",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "was",
+   "forms": "break → broke → broken",
+   "participle": "broken",
+   "keep": true,
+   "agent": "by the children",
+   "reason": "We want to know who broke it. It's important information.",
+   "agentLast": false,
+   "beNote": ""
+  },
+  {
+   "subject": "The hotel",
+   "verb": "provides",
+   "object": "breakfast",
+   "post": "for guests",
+   "postChunks": [
+    "for guests"
+   ],
+   "tense": "present",
+   "newSubject": "Breakfast",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "is",
+   "forms": "provide → provided → provided",
+   "participle": "provided",
+   "keep": false,
+   "agent": "by the hotel",
+   "reason": "It's easy to guess. We are talking about a hotel!",
+   "agentLast": false,
+   "beNote": ""
+  },
+  {
+   "subject": "The police",
+   "verb": "stopped",
+   "object": "the car",
+   "post": "near the station",
+   "postChunks": [
+    "near the station"
+   ],
+   "tense": "past",
+   "newSubject": "The car",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "was",
+   "forms": "stop → stopped → stopped",
+   "participle": "stopped",
+   "keep": true,
+   "agent": "by the police",
+   "reason": "We want to know who stopped it. The police is important information.",
+   "agentLast": false,
+   "beNote": ""
+  },
+  {
+   "subject": "The gardener",
+   "verb": "planted",
+   "object": "some trees",
+   "post": "in the park",
+   "postChunks": [
+    "in the park"
+   ],
+   "tense": "past",
+   "newSubject": "Some trees",
+   "pronounFrom": "",
+   "number": "plural",
+   "be": "were",
+   "forms": "plant → planted → planted",
+   "participle": "planted",
+   "keep": false,
+   "agent": "by the gardener",
+   "reason": "It's easy to guess. Gardeners plant trees!",
+   "agentLast": false,
+   "beNote": ""
+  },
+  {
+   "subject": "The restaurant",
+   "verb": "serves",
+   "object": "lunch",
+   "post": "until three o’clock",
+   "postChunks": [
+    "until three o’clock"
+   ],
+   "tense": "present",
+   "newSubject": "Lunch",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "is",
+   "forms": "serve → served → served",
+   "participle": "served",
+   "keep": false,
+   "agent": "by the restaurant",
+   "reason": "It's easy to guess. Restaurants serve food!",
+   "agentLast": false,
+   "beNote": ""
+  },
+  {
+   "subject": "The wind",
+   "verb": "blew",
+   "object": "the door",
+   "post": "open",
+   "postChunks": [
+    "open"
+   ],
+   "tense": "past",
+   "newSubject": "The door",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "was",
+   "forms": "blow → blew → blown",
+   "participle": "blown",
+   "keep": true,
+   "agent": "by the wind",
+   "reason": "The wind is the reason the door opened. That's interesting information.",
+   "agentLast": true,
+   "beNote": ""
+  },
+  {
+   "subject": "The postman",
+   "verb": "delivered",
+   "object": "a letter",
+   "post": "this morning",
+   "postChunks": [
+    "this morning"
+   ],
+   "tense": "past",
+   "newSubject": "A letter",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "was",
+   "forms": "deliver → delivered → delivered",
+   "participle": "delivered",
+   "keep": false,
+   "agent": "by the postman",
+   "reason": "It's easy to guess. Postmen deliver letters!",
+   "agentLast": false,
+   "beNote": ""
+  },
+  {
+   "subject": "The workers",
+   "verb": "built",
+   "object": "a new bridge",
+   "post": "last year",
+   "postChunks": [
+    "last year"
+   ],
+   "tense": "past",
+   "newSubject": "A new bridge",
+   "pronounFrom": "",
+   "number": "singular",
+   "be": "was",
+   "forms": "build → built → built",
+   "participle": "built",
+   "keep": false,
+   "agent": "by the workers",
+   "reason": "“The workers” doesn't tell us much. Which workers? We don't know them.",
+   "agentLast": false,
+   "beNote": ""
+  }
+ ]
+};
+const STORE_KEYS = {demo:"passiveStepper.deck.v1", practice:"passiveStepper.practice.v1"};
+const DEFAULTS = {demo:DEMO_DECK, practice:PRACTICE_DECK};
+function clone(o){return JSON.parse(JSON.stringify(o))}
+let deckMode = "demo";
+function loadDeck(m){ let d=clone(DEFAULTS[m]); try{ const t=localStorage.getItem(STORE_KEYS[m]); if(t){ const x=JSON.parse(t); if(x&&Array.isArray(x.sentences)) d=x; } }catch(e){} return d; }
+const decks = {demo:loadDeck("demo"), practice:loadDeck("practice")};
+let deck = decks.demo;
+function saveDeck(){ decks[deckMode]=deck; try{ localStorage.setItem(STORE_KEYS[deckMode], JSON.stringify(deck)); }catch(e){} }
+
+/* ================= HELPERS ================= */
+const $ = id => document.getElementById(id);
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const col = (cls,t)=>`<b class="${cls}">${esc(t)}</b>`;
+const R=t=>col("c-obj",t), B=t=>col("c-be",t), G=t=>col("c-pp",t), P=t=>col("c-agent",t), Y=t=>col("c-rest",t);
+const TENSE_NAME = {present:"present simple", past:"past simple"};
+const SUBJ_TO_OBJ = {i:"me",he:"him",she:"her",we:"us",they:"them"};
+
+function stepsFor(s){
+  const k=["start","object","move"];
+  if(s.pronounFrom) k.push("pronoun");
+  k.push("tense","be","pp","agent","finish","final");
+  if(!askMode) return k;
+  const out=[];
+  k.forEach(x=>{ if(!["start","move","final"].includes(x)) out.push("q:"+x); out.push(x); });
+  return out;
+}
+let askMode=false;
+try{ askMode = localStorage.getItem("passiveStepper.ask")==="1"; }catch(e){}
+
+/* ================= PLAYER ================= */
+let si = 0, st = 0;
+
+function buildLines(s){
+  const words=(cls,key,text)=>`<span class="w ${cls}" data-k="${key}">${esc(text)}</span>`;
+  let o = (s.pre?words("","pre",s.pre):"")+words("","subj",s.subject)+words("","verb",s.verb)+words("","obj",s.object);
+  if(s.post) o += words("","post",s.post);
+  o += `<span class="w dot" data-k="dot">.</span>`;
+  $("orig").innerHTML = o;
+
+  const movedText = s.pronounFrom ? s.pronounFrom : nsDisp(s);
+  const parts = [
+    s.pre ? words("c-rest","p-pre",s.pre) : "",
+    words("c-obj","p-obj",movedText),
+    words("c-be","p-be",s.be),
+    words("c-pp","p-pp",s.participle)
+  ];
+  const agent = words("c-agent","p-agent",s.agent);
+  const post = s.post ? words("c-rest","p-post",s.post) : "";
+  if(s.agentLast){ parts.push(post, agent); } else { parts.push(agent, post); }
+  parts.push(`<span class="w dot" data-k="p-dot">.</span>`);
+  $("pass").innerHTML = parts.join("");
+}
+const O = k => $("orig").querySelector(`[data-k="${k}"]`);
+const Pz = k => $("pass").querySelector(`[data-k="${k}"]`);
+
+function questionFor(key,s){
+  const base = (s.forms||"").split("→")[0].trim() || s.verb;
+  const Q = {
+    object: `What is the <b>object</b> in this sentence?`,
+    move:   `Where does the object go in the passive sentence?`,
+    pronoun:`${R(s.pronounFrom)} can't start a sentence. What pronoun do we need instead?`,
+    tense:  `Look at the verb. What <b>tense</b> is it?`,
+    be:     `Which form of <b>be</b> do we need? <span class="rule">am / is / are</span><span class="rule">was / were</span>`,
+    pp:     `What is the <b>past participle</b> of “${esc(base)}”?`,
+    agent:  `Is the subject important? Do we <b>keep it</b> (with “by”) or <b>leave it out</b>? There's no 100% right answer. What do you think?`,
+    finish: `Is anything missing from the passive sentence?`
+  };
+  return [`<span class="qmark">?</span>Your turn`, Q[key]+`<br><span style="color:var(--muted);font-size:.85em">Think, then click to check.</span>`, "c-q"];
+}
+function captionFor(key,s){
+  if(key.startsWith("q:")) return questionFor(key.slice(2),s);
+  const subjL = s.subject.toLowerCase();
+  switch(key){
+    case "start": return ["The active sentence",
+      `Here is our sentence. Let's change it to the passive, one step at a time.`, ""];
+    case "object": return ["Step 1 · Find the object",
+      `Ask: “${esc(cap(s.subject))} ${esc(s.verb)} <i>who or what</i>?” → ${R(s.object)}.<br>The object is the person or thing that <b>receives</b> the action.`, "c-obj"];
+    case "move": return ["Step 2 · Move the object to the front",
+      `${R(s.pronounFrom||s.newSubject)} goes to the front of a new sentence, before the verb. It is now the <b>subject</b> of the passive sentence${(s.pronounFrom||s.pre)?"":", so it gets a capital letter"}.`, "c-obj"];
+    case "pronoun": return ["Step 2b · Change the pronoun",
+      `${R(s.pronounFrom)} is an <b>object</b> pronoun. Before the verb we need a <b>subject</b> pronoun: ${R(s.pronounFrom)} → ${R(nsDisp(s))}.`, "c-obj"];
+    case "tense": {
+      const why = s.tense==="past" ? "It's a finished action in the past." : "It's a habit, a routine or a fact.";
+      return ["Step 3 · Find the tense",
+      `${B(s.verb)} is <b>${TENSE_NAME[s.tense]}</b>. ${why}<br>The passive sentence stays in the <b>same tense</b>.`, "c-be"];
+    }
+    case "be": {
+      const ns = s.newSubject;
+      let who;
+      if(s.number==="I") who = `The subject is “I”, so we use ${B(s.be)}.`;
+      else if(ns.toLowerCase()==="you") who = `With “you” we use ${B(s.be)}.`;
+      else who = `${R(ns)} is <b>${s.number}</b>${s.beNote?" "+esc(s.beNote):""}, so we use ${B(s.be)}.`;
+      const pres = `<span class="rule ${s.tense==="present"?"on":""}">present simple → am / is / are</span>`;
+      const past = `<span class="rule ${s.tense==="past"?"on":""}">past simple → was / were</span>`;
+      return ["Step 4 · Add the verb “be”", `${who}<br>${pres}${past}`, "c-be"];
+    }
+    case "pp": return ["Step 5 · Change the verb to the past participle",
+      `Use the 3rd form of the verb: <span style="white-space:nowrap">${esc(s.forms).replace(/→/g,"→")}</span>.<br>So we write ${G(s.participle)}.`, "c-pp"];
+    case "agent": {
+      if(s.keep){
+        const w = SUBJ_TO_OBJ[subjL];
+        const note = w ? ` (After “by”, ${P(s.subject)} becomes ${P(w)}.)` : "";
+        return ["Step 6 · Is the subject important?",
+          `We think <b>yes</b>. ${esc(s.reason)}<br>So we keep it, with <b>by</b>: ${P(s.agent)}.${note}<br><span style="color:var(--rest);font-size:.85em">🤔 This is a choice, not a rule. Sometimes both answers are OK!</span>`, "c-agent"];
+      }
+      return ["Step 6 · Is the subject important?",
+        `We think <b>no</b>. ${esc(s.reason)}<br>So we <b>leave it out</b>.<br><span style="color:var(--rest);font-size:.85em">🤔 This is a choice, not a rule. Sometimes both answers are OK!</span>`, "c-agent"];
+    }
+    case "finish": {
+      const rest=[s.pre,s.post].filter(Boolean).map(Y).join(" and ");
+      return ["Step 7 · Finish the sentence",
+      rest ? `Copy the rest of the sentence${s.pre?" (in the same places)":""}: ${rest}. Then add the full stop.` : `There's nothing else to copy. Just add the full stop.`, ""];
+    }
+    case "final": return ["Finished!",
+      `<b>${esc(activeText(s))}</b> &nbsp;→&nbsp; ${passiveHTML(s)}`, ""];
+  }
+}
+function cap(t){return t.charAt(0).toUpperCase()+t.slice(1)}
+function lowerStart(t){ const f=t.split(/\s+/)[0].toLowerCase(); return (LOWER_START.has(f) && f!=="i") ? t.charAt(0).toLowerCase()+t.slice(1) : t; }
+function nsDisp(s){ return s.pre ? lowerStart(s.newSubject) : s.newSubject; }
+function activeText(s){ return cap([s.pre,s.subject,s.verb,s.object,s.post].filter(Boolean).join(" "))+"."; }
+function chunksAfter(s){ return (s.postChunks && s.postChunks.length) ? s.postChunks : (s.post ? [s.post] : []); }
+function passiveHTML(s){
+  const parts=[R(nsDisp(s)),B(s.be),G(s.participle)];
+  if(s.pre) parts.unshift(Y(s.pre));
+  const ag = s.keep?P(s.agent):"", po = s.post?Y(s.post):"";
+  if(s.agentLast){ if(po)parts.push(po); if(ag)parts.push(ag);} else { if(ag)parts.push(ag); if(po)parts.push(po);}
+  return parts.join(" ")+".";
+}
+function passiveText(s){
+  const parts=[nsDisp(s),s.be,s.participle];
+  if(s.pre) parts.unshift(s.pre);
+  const ag = s.keep?s.agent:"", po=s.post||"";
+  if(s.agentLast){ if(po)parts.push(po); if(ag)parts.push(ag);} else { if(ag)parts.push(ag); if(po)parts.push(po);}
+  return parts.join(" ")+".";
+}
+
+/* State at a given step: applied from scratch (no animation) */
+function applyState(s, keys, step){
+  const at = k => { const i = keys.indexOf(k); return i>=0 && step>=i; };
+  const set = (el,cls,on)=>{ if(el) el.classList.toggle(cls,!!on); };
+
+  // original line
+  set(O("obj"),"c-obj",at("object"));
+  set(O("obj"),"ringed",at("object") && !at("move"));
+  set(O("obj"),"faded",at("move"));
+  set(O("verb"),"c-be",at("tense"));
+  set(O("verb"),"faded",at("pp"));
+  const vt = O("verb").querySelector(".tag");
+  if(at("tense") && !at("pp")){ if(!vt) O("verb").insertAdjacentHTML("beforeend",`<span class="tag">${TENSE_NAME[s.tense]}</span>`); }
+  else if(vt) vt.remove();
+  set(O("subj"),"c-agent",at("agent"));
+  set(O("subj"),"struck",at("agent") && !s.keep);
+  set(O("subj"),"faded",at("agent"));
+  if(s.post){ set(O("post"),"c-rest",at("finish")); set(O("post"),"faded",at("finish")); }
+  set(O("dot"),"faded",at("finish"));
+
+  // passive line
+  $("passLbl").style.opacity = at("move")?1:0;
+  const pObj = Pz("p-obj");
+  set(pObj,"hid",!at("move"));
+  pObj.textContent = (s.pronounFrom && !at("pronoun")) ? s.pronounFrom : nsDisp(s);
+  if(s.pre){ set(O("pre"),"c-rest",at("finish")); set(O("pre"),"faded",at("finish")); set(Pz("p-pre"),"hid",!at("finish")); }
+  set(Pz("p-be"),"hid",!at("be"));
+  set(Pz("p-pp"),"hid",!at("pp"));
+  const ag = Pz("p-agent");
+  set(ag,"hid",!at("agent"));
+  set(ag,"struck",!s.keep); set(ag,"faded",!s.keep);
+  set(ag,"gone",!s.keep && at("finish"));
+  if(s.post) set(Pz("p-post"),"hid",!at("finish"));
+  set(Pz("p-dot"),"hid",!at("finish"));
+
+  // formula
+  const f = [];
+  if(at("move")) f.push(`<span class="f c-obj">object</span>`);
+  if(at("be")) f.push(`<span class="plus">+</span><span class="f c-be">be</span>`);
+  if(at("pp")) f.push(`<span class="plus">+</span><span class="f c-pp">past participle</span>`);
+  if(at("agent")) f.push(`<span class="plus">+</span><span class="f c-agent ${s.keep?"":"struck faded"}">by …</span>${s.keep?"":`<span class="plus" style="font-size:.8em">(not needed)</span>`}`);
+  $("formula").innerHTML = f.join(" ");
+
+  // caption
+  const [t,b,cls] = captionFor(keys[step], s);
+  $("ctitle").className = cls; $("ctitle").innerHTML = t; $("cbody").innerHTML = b;
+}
+
+function fly(srcEl, dstEl){
+  if(!srcEl || !dstEl) return;
+  const a = srcEl.getBoundingClientRect(), b = dstEl.getBoundingClientRect();
+  const f = dstEl.cloneNode(true);
+  f.classList.remove("hid","faded","struck","gone");
+  f.classList.add("flyer");
+  f.style.left = b.left+"px"; f.style.top = b.top+"px";
+  f.style.fontSize = getComputedStyle(dstEl).fontSize;
+  f.style.transform = `translate(${a.left-b.left}px,${a.top-b.top}px)`;
+  document.body.appendChild(f);
+  dstEl.style.visibility="hidden";
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ f.style.transform="translate(0,0)"; }));
+  const done=()=>{ f.remove(); dstEl.style.visibility=""; };
+  f.addEventListener("transitionend",done,{once:true});
+  setTimeout(done,1200);
+}
+function anim(el,cls){ if(!el)return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+
+function animateStep(s,key){
+  switch(key){
+    case "object": anim(O("obj"),"pulse"); break;
+    case "move": fly(O("obj"),Pz("p-obj")); break;
+    case "pronoun": anim(Pz("p-obj"),"swap"); break;
+    case "tense": anim(O("verb"),"pulse"); break;
+    case "be": anim(Pz("p-be"),"chalkin"); break;
+    case "pp": anim(Pz("p-pp"),"chalkin"); break;
+    case "agent": anim(O("subj"),"pulse"); if(s.keep) fly(O("subj"),Pz("p-agent")); else anim(Pz("p-agent"),"chalkin"); break;
+    case "finish": if(s.pre) fly(O("pre"),Pz("p-pre")); if(s.post) fly(O("post"),Pz("p-post")); anim(Pz("p-dot"),"chalkin"); break;
+  }
+  anim($("caption"),"capin");
+}
+
+function render(animate){
+  const s = deck.sentences[si];
+  if(!s){ $("orig").innerHTML=""; $("pass").innerHTML=""; $("ctitle").textContent="No sentences yet"; $("cbody").textContent="Open “Sentences” to add one."; $("formula").innerHTML=""; $("dots").innerHTML=""; $("metaL").textContent=""; $("metaR").textContent=""; renderPicker(); return; }
+  const keys = stepsFor(s);
+  if(!animate) buildLines(s);
+  applyState(s,keys,st);
+  if(animate) animateStep(s,keys[st]);
+  $("metaL").textContent = `Sentence ${si+1} of ${deck.sentences.length} · Step ${st+1} of ${keys.length}`;
+  $("metaR").textContent = cap(TENSE_NAME[s.tense]);
+  $("dots").innerHTML = keys.map((k,i)=>`<i class="${i<=st?"on":""}"></i>`).join("");
+  $("deckTitle").textContent = deck.title||"";
+  renderPicker();
+}
+function renderPicker(){
+  $("picker").innerHTML = deck.sentences.map((s,i)=>`<button class="${i===si?"cur":""}" data-i="${i}" title="${esc(activeText(s))}">${i+1}</button>`).join("");
+}
+function next(){
+  const s = deck.sentences[si]; if(!s) return;
+  const n = stepsFor(s).length;
+  if(st < n-1){ st++; render(true); }
+  else if(si < deck.sentences.length-1){ si++; st=0; render(false); anim($("lines"),"capin"); }
+}
+function prev(){
+  if(st>0){ st--; render(false); }
+  else if(si>0){ si--; st=stepsFor(deck.sentences[si]).length-1; render(false); }
+}
+function go(i){ si=i; st=0; render(false); }
+
+$("board").addEventListener("click",next);
+$("btnNext").addEventListener("click",next);
+$("btnPrev").addEventListener("click",prev);
+$("picker").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return; b.blur(); if(mode==="practice"){ si=+b.dataset.i; startPractice(); } else go(+b.dataset.i); });
+document.addEventListener("keydown",e=>{
+  if(!$("editor").classList.contains("closed") || mode==="practice") return;
+  if(document.activeElement && ["BUTTON","INPUT"].includes(document.activeElement.tagName)) document.activeElement.blur();
+  if(["ArrowRight","PageDown"," ","Enter"].includes(e.key)){ e.preventDefault(); next(); }
+  else if(["ArrowLeft","PageUp","Backspace"].includes(e.key)){ e.preventDefault(); prev(); }
+  else if(e.key==="Home"){ st=0; render(false); }
+});
+$("btnFull").addEventListener("click",()=>{
+  try{
+    if(document.fullscreenElement){ document.exitFullscreen(); }
+    else { const p = document.documentElement.requestFullscreen(); if(p&&p.catch) p.catch(()=>{ $("btnFull").textContent="Full screen unavailable here"; }); }
+  }catch(e){ $("btnFull").textContent="Full screen unavailable here"; }
+});
+window.addEventListener("resize",()=>{ if(mode==="demo") render(false); });
+$("askMode").checked = askMode;
+$("askMode").addEventListener("change",e=>{
+  const s = deck.sentences[si];
+  const oldKey = s ? stepsFor(s)[st] : null;
+  askMode = e.target.checked;
+  try{ localStorage.setItem("passiveStepper.ask", askMode?"1":"0"); }catch(_){}
+  if(s){
+    const keys = stepsFor(s);
+    let i = keys.indexOf(oldKey);
+    if(i<0) i = Math.max(0, keys.indexOf(oldKey.slice(2))-1);
+    st = i;
+  }
+  e.target.blur();
+  render(false);
+});
+
+/* ================= EDITOR: language helpers ================= */
+const IRR_RAW = "be was been|beat beat beaten|become became become|begin began begun|bite bit bitten|blow blew blown|break broke broken|bring brought brought|build built built|burn burnt burnt|buy bought bought|catch caught caught|choose chose chosen|come came come|cost cost cost|cut cut cut|dig dug dug|do did done|draw drew drawn|drink drank drunk|drive drove driven|eat ate eaten|fall fell fallen|feed fed fed|feel felt felt|fight fought fought|find found found|fly flew flown|forget forgot forgotten|forgive forgave forgiven|freeze froze frozen|get got got|give gave given|go went gone|grow grew grown|hang hung hung|have had had|hear heard heard|hide hid hidden|hit hit hit|hold held held|hurt hurt hurt|keep kept kept|know knew known|lay laid laid|lead led led|leave left left|lend lent lent|let let let|light lit lit|lose lost lost|make made made|mean meant meant|meet met met|pay paid paid|put put put|read read read|ride rode ridden|ring rang rung|run ran run|say said said|see saw seen|sell sold sold|send sent sent|set set set|shake shook shaken|shoot shot shot|show showed shown|shut shut shut|sing sang sung|sit sat sat|sleep slept slept|speak spoke spoken|spend spent spent|spill spilt spilt|stand stood stood|steal stole stolen|stick stuck stuck|sweep swept swept|swim swam swum|take took taken|teach taught taught|tear tore torn|tell told told|think thought thought|throw threw thrown|understand understood understood|wake woke woken|wear wore worn|win won won|write wrote written";
+const IRR = {}, IRR_PAST = {};
+IRR_RAW.split("|").forEach(r=>{ const [b,p,pp]=r.split(" "); IRR[b]={past:p,pp}; if(!(p in IRR_PAST)) IRR_PAST[p]=b; });
+const E_BASES = new Set("like love move close use hope save decide invite create bake arrive live dance share smile change prepare produce receive believe complete describe organise organize recycle serve taste type vote promise practise replace place introduce welcome compare cause guide raise release score store translate celebrate charge damage destroy manage judge solve phone"
+  .split(" "));
+const DOUBLE = new Set("stop plan drop rob shop chat ban grab hug jog kidnap travel cancel label control admit prefer refer permit ship tap clap beg hop rub step trip wrap regret occur".split(" "));
+const OBJ_TO_SUBJ = {me:"I",him:"He",her:"She",us:"We",them:"They"};
+const LOWER_START = new Set("the a an my your his her its our their this that these those some someone somebody people they we he she it i you everyone nobody".split(" "));
+
+function regPast(b){
+  if(DOUBLE.has(b)) return b+b.slice(-1)+"ed";
+  if(b.endsWith("e")) return b+"d";
+  if(/[^aeiou]y$/.test(b)) return b.slice(0,-1)+"ied";
+  return b+"ed";
+}
+function baseOf(v,tense){
+  if(tense==="past" && IRR_PAST[v]) return IRR_PAST[v];
+  if(IRR[v]) return v;
+  if(IRR_PAST[v]) return IRR_PAST[v];
+  if(v==="has") return "have";
+  if(/ed$/.test(v)){
+    if(/ied$/.test(v)) return v.slice(0,-3)+"y";
+    if(E_BASES.has(v.slice(0,-1))) return v.slice(0,-1);
+    let b=v.slice(0,-2);
+    if(/([bdgmnprt])\1$/.test(b)) b=b.slice(0,-1);
+    if(/[vcuz]$/.test(b)) b+="e";
+    return b;
+  }
+  if(/ies$/.test(v)) return v.slice(0,-3)+"y";
+  if(/(sh|ch|x|ss|o)es$/.test(v)) return v.slice(0,-2);
+  if(/s$/.test(v) && !/ss$/.test(v)) return v.slice(0,-1);
+  return v;
+}
+function guessTense(v){
+  if(IRR_PAST[v] && !IRR[v]) return "past";
+  if(/ed$/.test(v)) return "past";
+  if(IRR[v] && IRR[v].past===v) return "past"; // put, cut, hit… (check!)
+  return "present";
+}
+function guessNumber(ns){
+  const l = ns.toLowerCase();
+  if(l==="i") return "I";
+  if(["we","you","they"].includes(l)) return "plural";
+  if(/\b(people|children|men|women|police|mice|teeth|feet|sheep)$/.test(l)) return "plural";
+  if(/\band\b/.test(l)) return "plural";
+  const last = l.split(/\s+/).pop();
+  if(/s$/.test(last) && !/(ss|us|is)$/.test(last)) return "plural";
+  return "singular";
+}
+function beFor(tense,num){
+  if(tense==="present") return num==="I"?"am":(num==="plural"?"are":"is");
+  return num==="plural"?"were":"was";
+}
+function agentFor(subject){
+  const l = subject.toLowerCase();
+  if(SUBJ_TO_OBJ[l]) return "by "+SUBJ_TO_OBJ[l];
+  if(l==="you") return "by you";
+  const first = l.split(/\s+/)[0];
+  if(LOWER_START.has(first)) return "by "+subject.charAt(0).toLowerCase()+subject.slice(1);
+  return "by "+subject;
+}
+function reasonPresets(subject, keep){
+  const S = `“${subject}”`;
+  return keep ? [
+    "We want to know who did it. It's important information.",
+    "We want to know who does it. It's important information.",
+    "The person is famous and important.",
+    "It's new and interesting information.",
+  ] : [
+    `${S} doesn't tell us anything useful.`,
+    `${S} just means people in general.`,
+    `${S} means everyone, so it isn't important.`,
+    "It's obvious who does this job.",
+    "We don't know who did it.",
+    "The action is more important than the person who did it.",
+  ];
+}
+function guessKeep(subject){
+  return !["someone","somebody","they","people","you","one","nobody","everyone"].includes(subject.toLowerCase());
+}
+
+/* ================= EDITOR: state ================= */
+let ed = {idx:-1, words:[], tags:[], role:"subj", touched:{}};
+const F = id=>$(id);
+const FIELDS = ["fTense","fNewSubject","fNumber","fBe","fForms","fPP","fAgent","fReason","fBeNote","fChunks"];
+FIELDS.forEach(id=>F(id).addEventListener("input",()=>{ ed.touched[id]=true; if(id==="fTense"||id==="fNumber") autofill(); updatePreview(); }));
+F("fTense").addEventListener("change",()=>{ed.touched.fTense=true;autofill();});
+F("fNumber").addEventListener("change",()=>{ed.touched.fNumber=true;autofill();});
+F("fAgentLast").addEventListener("change",()=>{ed.touched.fAgentLast=true;updatePreview();});
+["fKeep","fDrop"].forEach(id=>F(id).addEventListener("change",()=>{ ed.touched.keep=true; ed.touched.fReason=false; fillReasons(true); updatePreview(); }));
+F("fReasonPick").addEventListener("change",()=>{ if(F("fReasonPick").value){ F("fReason").value=F("fReasonPick").value; ed.touched.fReason=true; updatePreview(); }});
+
+function splitWords(t){ return t.trim().replace(/[.!?]+$/,"").split(/\s+/).filter(Boolean); }
+F("fSentence").addEventListener("input",()=>{
+  ed.words = splitWords(F("fSentence").value);
+  ed.tags = ed.words.map(()=> "none");
+  ed.touched = {};
+  renderChips(); autofill();
+});
+document.querySelectorAll(".paint button").forEach(b=>b.addEventListener("click",()=>{
+  ed.role=b.dataset.role;
+  document.querySelectorAll(".paint button").forEach(x=>x.classList.toggle("cur",x===b));
+}));
+$("chips").addEventListener("click",e=>{
+  const c=e.target.closest("span[data-i]"); if(!c) return;
+  const i=+c.dataset.i;
+  ed.tags[i] = (ed.tags[i]===ed.role) ? "none" : ed.role;
+  renderChips(); autofill();
+});
+function renderChips(){
+  $("chips").innerHTML = ed.words.map((w,i)=>`<span data-i="${i}" class="t-${ed.tags[i]}">${esc(w)}</span>`).join("") || `<span style="border:0;background:none;color:#998f78;cursor:default">Type a sentence above</span>`;
+}
+function parseTags(){
+  const n=ed.words.length; if(!n) return {ok:false,err:""};
+  const idx=r=>ed.tags.map((t,i)=>t===r?i:-1).filter(i=>i>=0);
+  const S=idx("subj"),V=idx("verb"),O_=idx("obj");
+  if(!S.length&&!V.length&&!O_.length) return {ok:false,err:""};
+  if(!S.length) return {ok:false,err:"Colour the subject (purple)."};
+  if(!V.length) return {ok:false,err:"Colour the verb (blue)."};
+  if(!O_.length) return {ok:false,err:"Colour the object (red)."};
+  const contig=a=>a.every((v,i)=>i===0||v===a[i-1]+1);
+  if(!contig(S)||!contig(V)||!contig(O_)) return {ok:false,err:"Each colour needs to be one group of words next to each other."};
+  if(V[0]!==S[S.length-1]+1||O_[0]!==V[V.length-1]+1) return {ok:false,err:"The order must be subject → verb → object, with no words in between. (Split phrasal verbs like “put the fire out” aren't supported. Write “put out the fire”.)"};
+  const j=a=>a.map(i=>ed.words[i]).join(" ");
+  const post = ed.words.slice(O_[O_.length-1]+1).join(" ").replace(/[.!?]+$/,"");
+  const pre = ed.words.slice(0,S[0]).join(" ");
+  return {ok:true,pre,subject:j(S),verb:j(V),object:j(O_),post};
+}
+function setIf(id,val){ if(!ed.touched[id]) F(id).value=val; }
+function autofill(){
+  const p=parseTags();
+  $("tagErr").textContent = p.err||"";
+  if(!p.ok){ updatePreview(); return; }
+  const vw = p.verb.toLowerCase().split(/\s+/), v0=vw[0], particle=vw.slice(1).join(" ");
+  const tense = ed.touched.fTense ? F("fTense").value : guessTense(v0);
+  setIf("fTense",tense);
+  const ol = p.object.toLowerCase();
+  const pron = OBJ_TO_SUBJ[ol]||"";
+  const ns = pron || (ol==="you"||ol==="it" ? cap(ol) : cap(p.object));
+  setIf("fNewSubject",ns);
+  const num = ed.touched.fNumber ? F("fNumber").value : guessNumber(F("fNewSubject").value);
+  setIf("fNumber",num);
+  setIf("fBe",beFor(F("fTense").value,F("fNumber").value));
+  const base = baseOf(v0,F("fTense").value);
+  const past = F("fTense").value==="past" ? v0 : (IRR[base]?IRR[base].past:regPast(base));
+  const pp = IRR[base]?IRR[base].pp:(F("fTense").value==="past" && !IRR_PAST[v0] ? v0 : regPast(base));
+  const add = w=>particle? w+" "+particle : w;
+  setIf("fForms",`${add(base)} → ${add(past)} → ${add(pp)}`);
+  setIf("fPP",add(pp));
+  setIf("fAgent",agentFor(p.subject));
+  setIf("fChunks",p.post);
+  if(!ed.touched.keep){ const k=guessKeep(p.subject); F("fKeep").checked=k; F("fDrop").checked=!k; }
+  fillReasons(false);
+  ed.parsed=p; ed.pronounFrom = pron? ol : "";
+  $("pronInfo").innerHTML = pron ? `Pronoun change: <b>${esc(ol)}</b> → <b>${esc(pron)}</b> (an extra step will be shown).` : "";
+  if(guessTense(v0)==="past" && IRR[v0] && IRR[v0].past===v0 && !ed.touched.fTense) $("pronInfo").innerHTML += ` <span style="color:#a35a00">“${esc(v0)}” looks the same in present and past. Check the tense.</span>`;
+  updatePreview();
+}
+function fillReasons(force){
+  const subj = ed.parsed?ed.parsed.subject:(parseTags().subject||"");
+  const keep = F("fKeep").checked;
+  const list = reasonPresets(subj||"…",keep);
+  F("fReasonPick").innerHTML = `<option value="">Choose a reason…</option>`+list.map(r=>`<option>${esc(r)}</option>`).join("");
+  if(force || !ed.touched.fReason){
+    let pick = list[0];
+    const l=(subj||"").toLowerCase();
+    if(!keep){ if(l==="they") pick=list[1]; else if(l==="people"||l==="everyone") pick=list[2]; else if(guessKeep(subj)) pick=list[3]; }
+    F("fReason").value = pick;
+  }
+}
+function currentSentence(){
+  const p = parseTags(); if(!p.ok) return null;
+  return {
+    pre:p.pre, subject:p.subject, verb:p.verb, object:p.object, post:p.post,
+    postChunks: F("fChunks").value.split("/").map(x=>x.trim()).filter(Boolean),
+    tense:F("fTense").value, newSubject:F("fNewSubject").value.trim(),
+    pronounFrom: (ed.pronounFrom && F("fNewSubject").value.trim().toLowerCase()!==ed.pronounFrom) ? ed.pronounFrom : "",
+    number:F("fNumber").value, be:F("fBe").value.trim(), forms:F("fForms").value.trim(),
+    participle:F("fPP").value.trim(), keep:F("fKeep").checked, agent:F("fAgent").value.trim(),
+    reason:F("fReason").value.trim(), agentLast:F("fAgentLast").checked, beNote:F("fBeNote").value.trim()
+  };
+}
+function updatePreview(){
+  $("saveOk").textContent="";
+  const s=currentSentence();
+  $("preview").innerHTML = s ? passiveHTML(s) : "–";
+}
+function clearForm(){
+  ed={idx:-1,words:[],tags:[],role:ed.role,touched:{}};
+  F("fSentence").value=""; FIELDS.forEach(id=>{ if(F(id).tagName!=="SELECT") F(id).value=""; });
+  F("fAgentLast").checked=false; F("fKeep").checked=true; F("fDrop").checked=false;
+  $("pronInfo").textContent=""; $("tagErr").textContent=""; $("saveErr").textContent="";
+  renderChips(); updatePreview(); renderList();
+}
+function loadIntoForm(i){
+  const s=deck.sentences[i]; ed.idx=i;
+  const all=[s.pre,s.subject,s.verb,s.object,s.post].filter(Boolean).join(" ");
+  F("fSentence").value = all+".";
+  ed.words=splitWords(all);
+  const n=t=>t?splitWords(t).length:0;
+  const np=n(s.pre),ns=n(s.subject),nv=n(s.verb),no=n(s.object);
+  ed.tags=ed.words.map((_,k)=>k<np?"none":k<np+ns?"subj":k<np+ns+nv?"verb":k<np+ns+nv+no?"obj":"none");
+  F("fChunks").value=chunksAfter(s).join(" / ");
+  ed.touched={fChunks:true,fTense:true,fNewSubject:true,fNumber:true,fBe:true,fForms:true,fPP:true,fAgent:true,fReason:true,fBeNote:true,keep:true,fAgentLast:true};
+  F("fTense").value=s.tense; F("fNewSubject").value=s.newSubject; F("fNumber").value=s.number;
+  F("fBe").value=s.be; F("fForms").value=s.forms; F("fPP").value=s.participle; F("fAgent").value=s.agent;
+  F("fReason").value=s.reason; F("fBeNote").value=s.beNote||""; F("fAgentLast").checked=!!s.agentLast;
+  F("fKeep").checked=!!s.keep; F("fDrop").checked=!s.keep;
+  renderChips(); ed.parsed=parseTags(); ed.pronounFrom=s.pronounFrom||(OBJ_TO_SUBJ[s.object.toLowerCase()]?s.object.toLowerCase():"");
+  fillReasons(false);
+  $("pronInfo").innerHTML = s.pronounFrom?`Pronoun change: <b>${esc(s.pronounFrom)}</b> → <b>${esc(s.newSubject)}</b> (an extra step will be shown).`:"";
+  $("tagErr").textContent=""; $("saveErr").textContent="";
+  updatePreview(); renderList();
+}
+function renderList(){
+  $("edList").innerHTML = deck.sentences.map((s,i)=>`
+    <div class="item ${i===ed.idx?"sel":""}">
+      <div class="t">${i+1}. ${esc(activeText(s))}<br><small>→ ${esc(passiveText(s))}</small></div>
+      <div class="row">
+        <button class="lb" data-a="edit" data-i="${i}">Edit</button>
+        <button class="lb" data-a="up" data-i="${i}" title="Move up">↑</button>
+        <button class="lb" data-a="down" data-i="${i}" title="Move down">↓</button>
+        <button class="lb" data-a="show" data-i="${i}">Present</button>
+        <button class="lb danger" data-a="del" data-i="${i}">Delete</button>
+      </div>
+    </div>`).join("") || `<div class="help">No sentences yet.</div>`;
+}
+$("edList").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  const i=+b.dataset.i, a=b.dataset.a, L=deck.sentences;
+  if(a==="edit") loadIntoForm(i);
+  else if(a==="up"&&i>0){ [L[i-1],L[i]]=[L[i],L[i-1]]; saveDeck(); renderList(); }
+  else if(a==="down"&&i<L.length-1){ [L[i+1],L[i]]=[L[i],L[i+1]]; saveDeck(); renderList(); }
+  else if(a==="show"){ si=i; closeEditor(); }
+  else if(a==="del"){
+    if(b.dataset.confirm){ L.splice(i,1); if(ed.idx===i) ed.idx=-1; saveDeck(); renderList(); si=Math.min(si,Math.max(0,L.length-1)); st=0; }
+    else { b.dataset.confirm="1"; b.textContent="Sure?"; setTimeout(()=>{ if(b.isConnected){ b.textContent="Delete"; delete b.dataset.confirm; } },2500); }
+  }
+});
+$("edSave").addEventListener("click",()=>{
+  $("saveErr").textContent=""; $("saveOk").textContent="";
+  const s=currentSentence();
+  if(!s){ $("saveErr").textContent = parseTags().err || "Type a sentence and colour the words first."; return; }
+  const need=[["newSubject","the new subject"],["be","the form of be"],["participle","the past participle"],["reason","a reason"]];
+  if(s.keep) need.push(["agent","the “by” phrase"]);
+  const miss=need.find(([k])=>!s[k]);
+  const norm=t=>t.replace(/\s+/g," ").trim();
+  if(!miss && norm(s.postChunks.join(" "))!==norm(s.post)){ $("saveErr").textContent="The end chunks must contain exactly the words after the object."; return; }
+  if(miss){ $("saveErr").textContent=`Fill in ${miss[1]}.`; return; }
+  if(ed.idx>=0) deck.sentences[ed.idx]=s; else { deck.sentences.push(s); ed.idx=deck.sentences.length-1; }
+  saveDeck(); renderList(); $("saveOk").textContent="Saved ✓";
+});
+$("edCancel").addEventListener("click",clearForm);
+$("edNew").addEventListener("click",()=>{ showForm(); clearForm(); F("fSentence").focus(); });
+$("edDeckTitle").addEventListener("input",()=>{ deck.title=$("edDeckTitle").value; saveDeck(); });
+$("edReset").addEventListener("click",()=>{ $("resetConfirm").style.display="block"; });
+$("edResetNo").addEventListener("click",()=>{ $("resetConfirm").style.display="none"; });
+$("edResetYes").addEventListener("click",()=>{ deck=clone(DEFAULTS[deckMode]); saveDeck(); $("resetConfirm").style.display="none"; $("edDeckTitle").value=deck.title; clearForm(); si=0; st=0; });
+
+function showForm(){ $("codePanel").style.display="none"; $("formPanel").style.display=""; }
+$("edCode").addEventListener("click",()=>{
+  $("formPanel").style.display="none"; $("codePanel").style.display="";
+  $("codeText").value = JSON.stringify(deck); $("codeMsg").textContent="";
+});
+$("codeBack").addEventListener("click",showForm);
+$("codeCopy").addEventListener("click",()=>{
+  const t=$("codeText"); t.select();
+  const ok=()=>$("codeMsg").textContent="Copied ✓";
+  try{ navigator.clipboard.writeText(t.value).then(ok,()=>{ $("codeMsg").textContent="Press Ctrl+C (⌘C on Mac) to copy the selected code."; }); }
+  catch(e){ $("codeMsg").textContent="Press Ctrl+C (⌘C on Mac) to copy the selected code."; }
+});
+$("codeLoad").addEventListener("click",()=>{
+  try{
+    const d=JSON.parse($("codeText").value);
+    if(!d||!Array.isArray(d.sentences)||!d.sentences.every(s=>s.subject&&s.verb&&s.object&&s.newSubject&&s.be&&s.participle)) throw 0;
+    deck=d; saveDeck(); $("edDeckTitle").value=deck.title||""; si=0; st=0; renderList();
+    $("codeMsg").textContent=`Loaded ${d.sentences.length} sentences ✓`;
+  }catch(e){ $("codeMsg").textContent="That code doesn't look right. Check you pasted all of it."; }
+});
+
+function openEditor(){ $("editor").classList.remove("closed"); $("edDeckTitle").value=deck.title||""; showForm(); if(ed.idx<0) clearForm(); else renderList(); }
+function closeEditor(){ $("editor").classList.add("closed"); if(si>=deck.sentences.length) si=0; st=0; if(mode==="practice") startPractice(); else render(false); }
+$("btnEdit").addEventListener("click",openEditor);
+$("edClose").addEventListener("click",closeEditor);
+
+/* ================= PRACTICE MODE ================= */
+const PRON_OPTS = {me:["I","me","my"],him:["he","him","his"],her:["she","her","hers"],us:["we","us","our"],them:["they","them","their"]};
+let pr = null;
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function ingForm(w){
+  if(/ie$/.test(w)) return w.slice(0,-2)+"ying";
+  if(/[^eoy]e$/.test(w)) return w.slice(0,-1)+"ing";
+  if(DOUBLE.has(w)) return w+w.slice(-1)+"ing";
+  return w+"ing";
+}
+function thirdForm(w){
+  if(w==="have") return "has";
+  if(/(s|sh|ch|x|z|o)$/.test(w)) return w+"es";
+  if(/[^aeiou]y$/.test(w)) return w.slice(0,-1)+"ies";
+  return w+"s";
+}
+function startCase(s,t){ return s.pre ? t.charAt(0).toLowerCase()+t.slice(1) : cap(t); }
+
+function prPhases(s){ const p=["object"]; if(s.pronounFrom) p.push("pronoun"); p.push("tense","be","pp","agent","rest","done"); return p; }
+
+function startPractice(){
+  const s = deck.sentences[si];
+  if(!s){ $("prAct").innerHTML=""; $("prPas").innerHTML=""; $("prTitle").textContent="No sentences yet"; $("prText").textContent=""; $("prOpts").innerHTML=""; return; }
+  pr = {s, phases:prPhases(s), i:0, solved:false};
+  const tile=(role,text,k)=>`<button class="chunk" data-role="${role}" data-k="${k}">${esc(text)}</button>`;
+  let a = "";
+  if(s.pre) a += tile("pre",s.pre,"pre");
+  a += tile("subj",s.subject,"subj")+tile("verb",s.verb,"verb")+tile("obj",s.object,"obj");
+  chunksAfter(s).forEach((c,i)=> a += tile("post",c,"post"+i));
+  $("prAct").innerHTML = a + `<span class="pw">.</span>`;
+
+  const w=(cls,k,text)=>`<span class="pw w ${cls} hid" data-k="${k}">${esc(text)}</span>`;
+  const parts=[];
+  if(s.pre) parts.push(w("c-rest","pre",s.pre));
+  parts.push(w("c-obj","obj", s.pronounFrom ? s.pronounFrom : startCase(s,s.newSubject)));
+  parts.push(w("c-be","be",s.be), w("c-pp","pp",s.participle));
+  const ag = w("c-agent","agent",s.agent);
+  const posts = chunksAfter(s).map((c,i)=>w("c-rest","post"+i,c));
+  if(s.agentLast) parts.push(...posts, ag); else parts.push(ag, ...posts);
+  parts.push(`<span class="pw w dot hid" data-k="dot">.</span>`);
+  $("prPas").innerHTML = parts.join("");
+  $("prPasLbl").style.opacity = .35;
+  $("prTense").textContent = "";  $("prTense").style.display="none";
+  renderPicker();
+  prRender();
+}
+const PA = k => $("prAct").querySelector(`[data-k="${k}"]`);
+const PP = k => $("prPas").querySelector(`[data-k="${k}"]`);
+
+function prRender(){
+  const s=pr.s, ph=pr.phases[pr.i];
+  pr.solved=false;
+  const qn = pr.phases.indexOf("rest");
+  $("prMeta").textContent = `Sentence ${si+1} of ${deck.sentences.length}` + (pr.i<qn ? ` · Question ${pr.i+1} of ${qn}` : "");
+  $("prHint").textContent=""; $("prHint").className="";
+  $("prOpts").innerHTML="";
+  $("prNext").hidden = true;
+  document.querySelectorAll("#prAct .chunk").forEach(c=>c.classList.remove("pick","focus-be","focus-agent"));
+  const title=(t,cls)=>{ $("prTitle").className=cls||"c-q"; $("prTitle").innerHTML=t; };
+  const base = (s.forms||"").split("→")[0].trim() || s.verb;
+
+  if(ph==="object"){
+    title(`<span class="qmark">?</span>Find the object`);
+    $("prText").innerHTML = `Tap the part of the sentence that is the <b>object</b>: the person or thing that <b>receives</b> the action.`;
+    document.querySelectorAll("#prAct .chunk").forEach(c=>c.classList.add("pick"));
+  }
+  else if(ph==="pronoun"){
+    title(`<span class="qmark">?</span>Change the pronoun`);
+    $("prText").innerHTML = `${R(s.pronounFrom)} can't go before the verb as the subject. Which word do we need?`;
+    const [subj,obj,poss]=PRON_OPTS[s.pronounFrom];
+    options([
+      {label:startCase(s,subj), ok:true},
+      {label:startCase(s,obj), hint:`“${obj}” is an <b>object</b> pronoun. We need a <b>subject</b> pronoun (like I, he, she, we, they).`},
+      {label:startCase(s,poss), hint:`“${poss}” shows who something belongs to (like “${poss} bag”). We need a <b>subject</b> pronoun.`}
+    ]);
+  }
+  else if(ph==="tense"){
+    PA("verb").classList.add("focus-be");
+    title(`<span class="qmark">?</span>What is the tense?`);
+    $("prText").innerHTML = `Look at the verb ${B(s.verb)}. What tense is it?`;
+    const T=[["present","present simple"],["pperf","present perfect"],["past","past simple"],["pcont","past continuous"]];
+    options(T.map(([k,l])=>({label:l, ok:k===s.tense, hint:
+      k==="pperf" ? `The present perfect uses <b>has</b> or <b>have</b> + past participle (like “has stolen”). Is there a “has” or “have” here?` :
+      k==="pcont" ? `The past continuous uses <b>was</b> or <b>were</b> + <b>-ing</b> (like “was stealing”). Is there an -ing verb here?` :
+      `Look at “${esc(s.verb)}” again. Is it a present form or a past form?`})), false);
+  }
+  else if(ph==="be"){
+    title(`<span class="qmark">?</span>Choose the verb “be”`);
+    $("prText").innerHTML = `The tense is <b>${TENSE_NAME[s.tense]}</b> and the new subject is ${R(nsDisp(s))}. Which form of <b>be</b> do we need?`;
+    const forms = s.number==="I" ? ["am","is","are","was","were"] : ["is","are","was","were"];
+    if(!forms.includes(s.be)) forms.push(s.be);
+    const tOf={am:"present",is:"present",are:"present",was:"past",were:"past"};
+    options(forms.map(f=>({label:f, ok:f===s.be, hint:
+      (tOf[f] && tOf[f]!==s.tense) ? `Remember the tense: ${TENSE_NAME[s.tense]} → <b>${s.tense==="past"?"was / were":"am / is / are"}</b>.` :
+      `Right tense! Now check: is ${R(nsDisp(s))} singular or plural?${s.beNote?" "+esc(s.beNote):""}`})), false);
+  }
+  else if(ph==="pp"){
+    title(`<span class="qmark">?</span>Choose the past participle`);
+    $("prText").innerHTML = `Which form of ${B(base)} do we need after ${B(s.be)}?`;
+    const f=(s.forms||"").split("→").map(x=>x.trim());
+    const vw=base.split(" "), part=vw.slice(1).join(" "), add=w=>part?w+" "+part:w;
+    const past=f[1]||"", ppc=s.participle;
+    const opts=[{label:ppc, ok:true}];
+    const seen=new Set([ppc]);
+    const push=(l,h)=>{ if(l && !seen.has(l)){ seen.add(l); opts.push({label:l,hint:h}); } };
+    push(base, `“${esc(base)}” is the base form (1st form). We need the <b>3rd form</b>.`);
+    push(past, `“${esc(past)}” is the past simple (2nd form). We need the <b>3rd form</b>: the past participle.`);
+    push(add(ingForm(vw[0])), `The -ing form is for continuous tenses. We need the <b>3rd form</b>.`);
+    if(opts.length<4) push(add(thirdForm(vw[0])), `That's the present simple form. We need the <b>3rd form</b>.`);
+    options(shuffle(opts));
+  }
+  else if(ph==="agent"){
+    PA("subj").classList.add("focus-agent");
+    title(`<span class="qmark">?</span>Is the subject important?`);
+    $("prText").innerHTML = `What about ${P(s.subject)}? Should we keep it in the passive sentence?<br><span style="color:var(--muted);font-size:.85em">This is a choice. There's no 100% right answer. What do you think?</span>`;
+    options([
+      {label:`Keep it: “${s.agent}”`, ok:true, match:s.keep},
+      {label:`Leave it out`, ok:true, match:!s.keep}
+    ], false);
+  }
+  else if(ph==="rest"){
+    doRest();
+  }
+  else if(ph==="done"){
+    title("Well done! ✓","c-pp");
+    $("prText").innerHTML = `<b>${esc(activeText(s))}</b><br>→ ${passiveHTML(s)}`;
+    $("prNext").hidden=false;
+    $("prNext").textContent = si<deck.sentences.length-1 ? "Next sentence →" : "Start again from sentence 1 →";
+  }
+}
+
+function options(list, mix){
+  $("prOpts").innerHTML = list.map((o,i)=>`<button class="opt" data-i="${i}">${esc(o.label)}</button>`).join("");
+  pr.opts = list;
+}
+$("prOpts").addEventListener("click",e=>{
+  const b=e.target.closest(".opt"); if(!b||pr.solved) return;
+  const o=pr.opts[+b.dataset.i];
+  if(o.ok){ b.classList.add("right"); solve(o); }
+  else { b.classList.add("wrong"); anim(b,"shake"); hint(o.hint); }
+});
+$("prAct").addEventListener("click",e=>{
+  const c=e.target.closest(".chunk"); if(!c||!pr||pr.solved||pr.phases[pr.i]!=="object") return;
+  const r=c.dataset.role, s=pr.s;
+  if(r==="obj"){ solve(); return; }
+  anim(c,"shake");
+  hint(r==="subj" ? `“${esc(s.subject)}” is the <b>subject</b>: it <i>does</i> the action. Which part <i>receives</i> the action?` :
+       r==="verb" ? `“${esc(s.verb)}” is the <b>verb</b>: the action itself. Who or what receives the action?` :
+       `“${esc(c.textContent)}” gives extra information (when, where…). Who or what receives the action?`);
+});
+function hint(h){ $("prHint").className=""; $("prHint").innerHTML = "Not quite. "+h; anim($("prHint"),"capin"); }
+
+function solve(o){
+  const s=pr.s, ph=pr.phases[pr.i];
+  pr.solved=true;
+  document.querySelectorAll("#prAct .chunk").forEach(c=>c.classList.remove("pick"));
+  let explain="";
+  if(ph==="object"){
+    PA("obj").classList.add("c-obj");
+    $("prPasLbl").style.opacity=1;
+    PP("obj").classList.remove("hid"); fly(PA("obj"),PP("obj"));
+    setTimeout(()=>PA("obj").classList.add("faded"),900);
+    explain = `${R(s.object)} is the object. ` + captionFor("move",s)[1];
+  } else if(ph==="pronoun"){
+    PP("obj").textContent = nsDisp(s); anim(PP("obj"),"swap");
+    explain = captionFor("pronoun",s)[1];
+  } else if(ph==="tense"){
+    PA("verb").classList.add("c-be");
+    PA("verb").insertAdjacentHTML("beforeend",`<span class="tag">${TENSE_NAME[s.tense]}</span>`);
+    explain = captionFor("tense",s)[1];
+  } else if(ph==="be"){
+    PP("be").classList.remove("hid"); anim(PP("be"),"chalkin");
+    explain = captionFor("be",s)[1];
+  } else if(ph==="pp"){
+    PP("pp").classList.remove("hid"); anim(PP("pp"),"chalkin");
+    const t=PA("verb").querySelector(".tag"); if(t) t.remove();
+    PA("verb").classList.add("faded");
+    explain = captionFor("pp",s)[1];
+  } else if(ph==="agent"){
+    PA("subj").classList.add("c-agent");
+    PP("agent").classList.remove("hid");
+    if(s.keep){ fly(PA("subj"),PP("agent")); }
+    else { PA("subj").classList.add("struck"); PP("agent").classList.add("struck","faded"); anim(PP("agent"),"chalkin"); }
+    setTimeout(()=>PA("subj").classList.add("faded"),900);
+    const our = s.keep ? `keep it: ${P(s.agent)}` : `leave it out`;
+    explain = (o && o.match===false)
+      ? `<b>🤔 That's OK too!</b> This is a choice, not a rule. Here, we chose to <b>${our}</b>, because: ${esc(s.reason)} But your answer can be OK too.`
+      : `<b>✓ Good choice!</b> We chose the same. ${esc(s.reason)} But remember: this is a choice, not a rule. Sometimes both answers are OK.`;
+  }
+  $("prHint").className="good";
+  $("prHint").innerHTML = ph==="agent" ? explain : `<b>✓ Correct!</b> ${explain}`;
+  anim($("prHint"),"capin");
+  $("prNext").hidden=false; $("prNext").textContent="Next →";
+}
+function doRest(){
+  const s=pr.s;
+  $("prTitle").className=""; $("prTitle").innerHTML="Finish the sentence";
+  $("prText").innerHTML = captionFor("finish",s)[1];
+  if(!s.keep) PP("agent").classList.add("gone");
+  const moves=[]; if(s.pre) moves.push("pre"); chunksAfter(s).forEach((c,i)=>moves.push("post"+i));
+  moves.forEach((k,n)=>setTimeout(()=>{
+    PA(k).classList.add("c-rest"); PP(k).classList.remove("hid"); fly(PA(k),PP(k));
+    setTimeout(()=>PA(k).classList.add("faded"),900);
+  }, n*350));
+  setTimeout(()=>{ PP("dot").classList.remove("hid"); anim(PP("dot"),"chalkin"); }, moves.length*350+300);
+  pr.solved=true;
+  $("prNext").hidden=false; $("prNext").textContent="Next →";
+}
+$("prNext").addEventListener("click",()=>{
+  if(!pr) return;
+  if(pr.phases[pr.i]==="done"){ si = si<deck.sentences.length-1 ? si+1 : 0; startPractice(); window.scrollTo(0,0); return; }
+  pr.i++; prRender();
+});
+$("prRestart").addEventListener("click",()=>startPractice());
+
+/* ================= MODE SWITCH ================= */
+let mode="demo";
+function setMode(m, fromHash){
+  if(m!==mode){ si=0; }
+  mode=m; deckMode=m; deck=decks[m]; ed.idx=-1;
+  document.body.classList.toggle("practice-mode", m==="practice");
+  $("mDemo").classList.toggle("cur", m==="demo"); $("mPractice").classList.toggle("cur", m==="practice");
+  $("mDemo").setAttribute("aria-selected", m==="demo"); $("mPractice").setAttribute("aria-selected", m==="practice");
+  if(!fromHash){ try{ if(m==="practice") location.hash="practice"; else if(location.hash) history.replaceState(null,"",location.pathname+location.search); }catch(e){} }
+  if(m==="practice") startPractice(); else { st=0; render(false); }
+}
+$("mDemo").addEventListener("click",e=>{ e.currentTarget.blur(); setMode("demo"); });
+$("mPractice").addEventListener("click",e=>{ e.currentTarget.blur(); setMode("practice"); });
+window.addEventListener("hashchange",()=>{ const m=location.hash==="#practice"?"practice":"demo"; if(m!==mode) setMode(m,true); });
+
+/* ================= START ================= */
+renderChips();
+setMode(location.hash==="#practice" ? "practice" : "demo", true);
+</script>
+</body>
+</html>
